@@ -147,7 +147,13 @@ April "Start to Collect / Start to Play" line.
   Protector `DAHMM4oY4kk`. (Container egress is blocked, so Canva fetched the
   Shopify CDN photos server-side; Shopify pulled the Canva PNG export the same way.)
 
-**Before publishing (`status: ACTIVE`), decide inventory handling:**
+**Inventory wired (2026-06-10):** all 3 converted to real component-linked
+bundles via `productVariantRelationshipBulkUpdate` (the first-party Bundles app
+mechanism), price locked `FIXED`. Stock now auto-derives from components —
+Starter 3, Battle 2, Pull Protector 4 — and can't oversell a component. Only
+step left is flipping `status: ACTIVE`.
+
+**Original note — inventory handling options (now resolved via the wiring above):**
 - Each draft is `tracked: true` with **0 stock** — publish as-is and it shows
   "sold out". Two ways to fix:
   - **A. Free Shopify Bundles app (recommended):** rebuild as a real bundle so
