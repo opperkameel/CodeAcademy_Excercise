@@ -28,20 +28,27 @@ Penny Sleeves 100ct + Toploaders 25ct + ONE-TOUCH Magnetic Holder.
 - This is the single highest-ROI thing to enable, because it attaches to your
   existing sealed traffic with zero new customer acquisition.
 
-### 2. Starter Collector Kit — €24.95  *(beginner / cadeau)*
-Chaos Rising Booster + Penny Sleeves + Toploaders + Charmander Playmat.
-MSRP €27.46, **customer saves €2.51**.
-- **Profit €7.45 · margin 30% · stock for ~2**
-- vs. the booster alone: **+€6.25 profit, +€17 AOV**.
-- Role: the entry gift/beginner SKU. Targets your `kind` / `ouder` / `cadeau`
-  audience tags. Great Google Shopping + social item.
+### 2. Starter Collector Kit — €26.95  *(beginner / verzamelen / cadeau)*
+Chaos Rising Booster + Penny Sleeves + Toploaders + **9-Pocket Pro Binder**.
+MSRP €29.46, **customer saves €2.51**.
+- **Profit €8.35 · margin 31% · stock for ~3**
+- vs. the booster alone: **+€7.15 profit, +€19 AOV**.
+- Role: the entry **collector** SKU — one coherent "open → sleeve → toploader →
+  store" loop. A binder (`verzamelen`) is the right anchor here, **not** a
+  playmat (which is play gear — moved to the Battle Bundle). Targets your
+  `kind` / `ouder` / `cadeau` tags. Great Google Shopping + social item.
 
-### 3. Player's Battle Bundle — €32.95  *(spelen)*
-Zapdos ex Deluxe Battle Deck + Dragon Shield Black 100ct + Eclipse Deck Box.
-MSRP €35.47, **customer saves €2.52**.
-- **Profit €7.44 · margin 23% · stock for ~2**
-- vs. the deck alone: **+€4.45 profit, +€13 AOV**.
-- Role: ready-to-play kit for the competitive/`gevorderd` crowd.
+### 3. Player's Battle Bundle — €46.95  *(spelen)*  ·  lean alt. €42.95
+**Complete:** Zapdos ex Deluxe Battle Deck + Dragon Shield Black 100ct +
+Eclipse Deck Box + **Charmander Playmat**. MSRP €50.46, **saves €3.51**.
+- **Profit €13.20 · margin 28% · stock for ~2** — strongest in-stock bundle.
+- vs. the deck alone: **+€10.20 profit, +€27 AOV**.
+- Role: a complete **tournament-ready** kit for players/`gevorderd` — deck to
+  play, sleeves to protect it, deck box to carry it, playmat to play on. The
+  playmat (`spelen`) belongs with players, not in the collector kit.
+- **Lean alternative — €42.95:** drop the deck box (deck + sleeves + playmat).
+  Profit €11.67, margin 27%, +€23 AOV. Use this if €46.95 feels steep on a
+  €20-deck anchor.
 
 ### 4. Gift Box — €39.95  *(cadeau / Q4)*
 Pikachu Plush + Chaos Rising Booster + Funko POP.
@@ -62,8 +69,9 @@ MSRP €115.97, **customer saves €6.02**.
 | Bundle | Price | Profit | Margin | +AOV vs anchor | Units now |
 |---|---:|---:|---:|---:|---:|
 | Pull Protector Kit | €6.99 | €2.88 | 41% | — | ~4 |
-| Starter Collector Kit | €24.95 | €7.45 | 30% | +€17 | ~2 |
-| Player's Battle Bundle | €32.95 | €7.44 | 23% | +€13 | ~2 |
+| Starter Collector Kit | €26.95 | €8.35 | 31% | +€19 | ~3 |
+| Player's Battle Bundle (complete) | €46.95 | €13.20 | 28% | +€27 | ~2 |
+| Player's Battle Bundle (lean alt.) | €42.95 | €11.67 | 27% | +€23 | ~2 |
 | Gift Box | €39.95 | €10.42 | 26% | +€32 | ~1 |
 | Mega Collector's (hero) | €109.95 | €22.17 | 20% | +€30 | 0 (restock) |
 

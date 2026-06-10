@@ -77,19 +77,27 @@ class Bundle:
 
 BUNDLES = [
     Bundle(
-        "Starter Collector Kit  (beginner / cadeau)",
+        "Starter Collector Kit  (beginner / verzamelen / cadeau)",
         [("Chaos Rising Booster Pack", 7.99, "sealed"),
          ("Ultra PRO Penny Sleeves 100ct", 1.49, "accessory"),
          ("Ultra PRO Toploaders 25ct", 2.99, "accessory"),
-         ("Charmander Playmat", 14.99, "accessory")],
-        bundle_price=24.95, max_units_now=2,   # playmat stock = 2
+         ("Ultra PRO 9-Pocket Pro Binder", 16.99, "accessory")],  # collect-and-protect, not a playmat
+        bundle_price=26.95, max_units_now=3,   # binder stock = 3
     ),
     Bundle(
-        "Player's Battle Bundle  (spelen)",
+        "Player's Battle Bundle — complete  (spelen)",
         [("Zapdos ex Deluxe Battle Deck", 19.99, "sealed"),
          ("Dragon Shield Black 100ct", 10.99, "accessory"),
-         ("Eclipse PRO 100+ Deck Box", 4.49, "accessory")],
-        bundle_price=32.95, max_units_now=2,   # battle deck stock = 2
+         ("Eclipse PRO 100+ Deck Box", 4.49, "accessory"),
+         ("Charmander Playmat", 14.99, "accessory")],   # playmat lives here, with the players
+        bundle_price=46.95, max_units_now=2,   # deck/playmat stock = 2
+    ),
+    Bundle(
+        "Player's Battle Bundle — lean  (spelen, alt.)",
+        [("Zapdos ex Deluxe Battle Deck", 19.99, "sealed"),
+         ("Dragon Shield Black 100ct", 10.99, "accessory"),
+         ("Charmander Playmat", 14.99, "accessory")],   # playmat swapped in for the deck box
+        bundle_price=42.95, max_units_now=2,
     ),
     Bundle(
         "Mega Evolution Collector's Bundle  (HERO, needs ETB restock)",
