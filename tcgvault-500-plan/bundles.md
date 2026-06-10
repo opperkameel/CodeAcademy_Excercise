@@ -126,6 +126,18 @@ Either way, for each bundle:
 - Keep at least one bundle **above the €60 free-shipping threshold** so the
   bundle also pulls the shipping economics the right way.
 
+**Fields completed + Dutch (2026-06-10):** all 3 bundles brought up to the same
+standard as the rest of the catalog — Dutch titles, Dutch descriptions ("Wat zit
+erin?" + ideaal-voor), Dutch SEO title/description, Shopify taxonomy category
+(Card Games / Card Game Accessories), and the full bilingual (NL/EN) metafield
+set the other products use: `tcgvault.bundle_contents / game_focus /
+compatibility_or_capacity / ideal_for`, `custom.shipping_note /
+merchandising_role / faq_*_nl / faq_*_en`, `mm-google-shopping.condition /
+custom_product / google_product_category`, `mc-facebook.google_product_category`,
+`global.title_tag / description_tag`. Still open: hero-image polish (paused) and
+the Shopify category-attribute metafields (`shopify.recommended-age-group` etc.,
+best set via the category attributes UI in admin).
+
 ## Build log (drafts created 2026-06-10)
 Created as **DRAFT** products (not public) in shop.tcgvault.be:
 
