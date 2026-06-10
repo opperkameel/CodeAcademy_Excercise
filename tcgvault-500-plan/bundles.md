@@ -139,10 +139,13 @@ Created as **DRAFT** products (not public) in shop.tcgvault.be:
 April "Start to Collect / Start to Play" line.
 - The 5 old bundles (`BUNDLE-1-*`, `BUNDLE-2-*`) were **ARCHIVED** (reversible,
   not hard-deleted) — recoverable from Products → Archived.
-- Their generated images were **reused as placeholder heroes** on the 3 new
-  bundles. Fit is approximate (esp. the Battle bundle, whose image shows a
-  booster and omits the deck box + playmat) — **regenerate exact images before
-  publishing**, the Battle one first.
+- ~~Their generated images were reused as placeholder heroes.~~ **Replaced.**
+- **Images regenerated (2026-06-10):** new hero images built in Canva by
+  compositing the *real component product photos* (no AI-invented products) into
+  clean grids, so each bundle image shows exactly what's inside. Placeholders
+  removed. Source designs: Starter `DAHMMxqX7xA`, Battle `DAHMM6CC554`, Pull
+  Protector `DAHMM4oY4kk`. (Container egress is blocked, so Canva fetched the
+  Shopify CDN photos server-side; Shopify pulled the Canva PNG export the same way.)
 
 **Before publishing (`status: ACTIVE`), decide inventory handling:**
 - Each draft is `tracked: true` with **0 stock** — publish as-is and it shows
