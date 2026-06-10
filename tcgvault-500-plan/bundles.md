@@ -126,6 +126,25 @@ Either way, for each bundle:
 - Keep at least one bundle **above the €60 free-shipping threshold** so the
   bundle also pulls the shipping economics the right way.
 
+## Build log (drafts created 2026-06-10)
+Created as **DRAFT** products (not public) in shop.tcgvault.be:
+
+| Bundle | Price | SKU | Product ID |
+|---|---:|---|---|
+| Starter Collector Kit | €26.95 | `BUNDLE-STARTER-COLLECTOR` | 11357464953173 |
+| Player's Battle Bundle (complete) | €46.95 | `BUNDLE-BATTLE-COMPLETE` | 11357465051477 |
+| Pull Protector Kit | €6.99 | `BUNDLE-PULL-PROTECTOR` | 11357465149781 |
+
+**Before publishing (`status: ACTIVE`), decide inventory handling:**
+- Each draft is `tracked: true` with **0 stock** — publish as-is and it shows
+  "sold out". Two ways to fix:
+  - **A. Free Shopify Bundles app (recommended):** rebuild as a real bundle so
+    stock auto-links to components (can't oversell the binder/playmat).
+  - **B. Manual:** set each bundle's stock to its lowest component count
+    (Starter ~3, Battle ~2, Pull Protector ~4) and adjust as components move.
+- Add a composite "set" photo (Canva) — drafts currently have no image.
+- Free shipping threshold: **not implemented** (owner decision — margin).
+
 ## Rollout order
 1. **Pull Protector Kit** as a cart add-on — instant, attaches to current orders.
 2. **Starter Collector Kit** + **Player's Battle Bundle** — in-stock, gift+player.
