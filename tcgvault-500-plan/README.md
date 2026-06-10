@@ -24,6 +24,8 @@ on sealed.
 |---|---|
 | `PLAN.md` | The full plan: diagnosis, profit math, four levers, 90-day week-by-week execution, and what I can build for you with the connected Shopify/Mailchimp/ads/Canva tools. |
 | `profit_model.py` | Tunable calculator. Edit your real COGS/shipping/fees at the top, run `python3 profit_model.py`, and it solves the revenue/orders/traffic needed for €500. No dependencies. |
+| `bundles.md` | The five bundle designs (real SKUs, prices, verified margins, stock limits, and how to build them on Shopify Basic). |
+| `bundle_calc.py` | Verifies each bundle out-profits its anchor sold alone. Run `python3 bundle_calc.py`. |
 | `tracking/kpi_tracker.md` | Weekly scorecard + monthly trajectory vs. target. |
 
 ## Start here
