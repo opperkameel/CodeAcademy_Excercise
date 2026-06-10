@@ -135,6 +135,15 @@ Created as **DRAFT** products (not public) in shop.tcgvault.be:
 | Player's Battle Bundle (complete) | €46.95 | `BUNDLE-BATTLE-COMPLETE` | 11357465051477 |
 | Pull Protector Kit | €6.99 | `BUNDLE-PULL-PROTECTOR` | 11357465149781 |
 
+**Decision (owner, 2026-06-10):** go with these 3 new bundles; remove the older
+April "Start to Collect / Start to Play" line.
+- The 5 old bundles (`BUNDLE-1-*`, `BUNDLE-2-*`) were **ARCHIVED** (reversible,
+  not hard-deleted) — recoverable from Products → Archived.
+- Their generated images were **reused as placeholder heroes** on the 3 new
+  bundles. Fit is approximate (esp. the Battle bundle, whose image shows a
+  booster and omits the deck box + playmat) — **regenerate exact images before
+  publishing**, the Battle one first.
+
 **Before publishing (`status: ACTIVE`), decide inventory handling:**
 - Each draft is `tracked: true` with **0 stock** — publish as-is and it shows
   "sold out". Two ways to fix:
