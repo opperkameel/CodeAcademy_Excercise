@@ -78,6 +78,31 @@
     padding: 4px 9px; border-radius: 8px; pointer-events: none;
   }
 
+  #mapToggle {
+    position: absolute; top: 12px; right: 12px; z-index: 20;
+    cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
+    color: #eaf0ff; background: rgba(12, 16, 26, 0.72);
+    border: 1px solid rgba(120, 160, 255, 0.25); border-radius: 10px;
+    padding: 9px 14px; backdrop-filter: blur(4px);
+  }
+  #mapToggle:hover { border-color: rgba(120,160,255,.55); }
+
+  /* Virtual joystick — hidden on desktop, shown on touch devices */
+  #stick {
+    position: absolute; z-index: 15; left: 26px; bottom: 42px;
+    width: 118px; height: 118px; border-radius: 50%;
+    background: rgba(124,240,176,.10);
+    border: 2px solid rgba(124,240,176,.35);
+    display: none; touch-action: none;
+  }
+  #stickNub {
+    position: absolute; left: 50%; top: 50%; width: 52px; height: 52px;
+    margin: -26px 0 0 -26px; border-radius: 50%;
+    background: rgba(124,240,176,.55); border: 2px solid #eafff2;
+  }
+  body.touch #stick { display: block; }
+  body.touch #mapToggle { bottom: auto; }
+
   /* Overlays (start / game-over) */
   .overlay {
     position: absolute; inset: 0; z-index: 30;
@@ -125,6 +150,11 @@
       <div id="healthbar"><div id="healthfill"></div></div>
     </div>
   </div>
+
+  <button id="mapToggle">🗺 Street</button>
+
+  <!-- Virtual joystick (mobile) — appears only on touch devices -->
+  <div id="stick"><div id="stickNub"></div></div>
 
   <div id="locbadge">📍 Oosteroever, Oostende (BE) — real OpenStreetMap tiles</div>
 
@@ -183,10 +213,32 @@ const map = L.map("map", {
   keyboard: false,
   inertia: false,
 });
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+// Two real-world basemaps you can toggle between in-game.
+const streetLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   attribution: '&copy; OpenStreetMap contributors',
-}).addTo(map);
+});
+const satLayer = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  { maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics' }
+);
+let satOn = false;
+streetLayer.addTo(map);
+
+function setBasemap(sat) {
+  satOn = sat;
+  if (sat) { map.removeLayer(streetLayer); satLayer.addTo(map); }
+  else { map.removeLayer(satLayer); streetLayer.addTo(map); }
+  // Satellite is already dark; ease the CSS dimming so streets stay readable.
+  document.getElementById("map").style.filter = sat
+    ? "brightness(0.82) saturate(1.05) contrast(1.05)"
+    : "brightness(0.72) saturate(0.85) contrast(1.05)";
+  const b = document.getElementById("mapToggle");
+  b.textContent = sat ? "🛰 Satellite" : "🗺 Street";
+  document.getElementById("locbadge").textContent = sat
+    ? "📍 Oosteroever, Oostende (BE) — Esri satellite imagery"
+    : "📍 Oosteroever, Oostende (BE) — real OpenStreetMap tiles";
+}
 
 // --- Canvas -----------------------------------------------------------------
 const canvas = document.getElementById("game");
@@ -277,13 +329,67 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
 canvas.addEventListener("mousemove", (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
 canvas.addEventListener("mousedown", () => { if (running) shoot(); });
-// Touch: move toward touch point is out of scope for the POC; tap = shoot.
-canvas.addEventListener("touchstart", (e) => {
-  const t = e.touches[0];
-  mouse.x = t.clientX; mouse.y = t.clientY;
-  if (running) shoot();
+
+// --- Touch / mobile: left-half = joystick to move, right-half = aim & fire ---
+const isTouch = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+if (isTouch) document.body.classList.add("touch");
+
+const stick = document.getElementById("stick");
+const stickNub = document.getElementById("stickNub");
+const STICK_MAX = 46;              // px the nub travels from centre
+const joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 };
+let fireTouchId = null, autoFire = 0;
+
+function isLeftHalf(x) { return x < W / 2; }
+
+function onTouchStart(e) {
+  for (const t of e.changedTouches) {
+    if (isLeftHalf(t.clientX) && !joy.active) {
+      joy.active = true; joy.id = t.identifier;
+      joy.ox = t.clientX; joy.oy = t.clientY; joy.dx = 0; joy.dy = 0;
+      stick.style.left = (t.clientX - 59) + "px";
+      stick.style.top = (t.clientY - 59) + "px";
+      stick.style.bottom = "auto";
+    } else if (fireTouchId === null) {
+      fireTouchId = t.identifier;
+      mouse.x = t.clientX; mouse.y = t.clientY;
+      if (running) { shoot(); autoFire = 10; }
+    }
+  }
   e.preventDefault();
-}, { passive: false });
+}
+function onTouchMove(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joy.id) {
+      let dx = t.clientX - joy.ox, dy = t.clientY - joy.oy;
+      const d = Math.hypot(dx, dy);
+      if (d > STICK_MAX) { dx = dx / d * STICK_MAX; dy = dy / d * STICK_MAX; }
+      joy.dx = dx / STICK_MAX; joy.dy = dy / STICK_MAX;
+      stickNub.style.transform = `translate(${dx}px, ${dy}px)`;
+    } else if (t.identifier === fireTouchId) {
+      mouse.x = t.clientX; mouse.y = t.clientY;
+    }
+  }
+  e.preventDefault();
+}
+function onTouchEnd(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joy.id) {
+      joy.active = false; joy.id = null; joy.dx = 0; joy.dy = 0;
+      stickNub.style.transform = "translate(0,0)";
+    } else if (t.identifier === fireTouchId) {
+      fireTouchId = null; autoFire = 0;
+    }
+  }
+  e.preventDefault();
+}
+canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+canvas.addEventListener("touchend", onTouchEnd, { passive: false });
+canvas.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
+// Map style toggle
+document.getElementById("mapToggle").addEventListener("click", () => setBasemap(!satOn));
 
 // --- Update -----------------------------------------------------------------
 function update() {
@@ -297,13 +403,21 @@ function update() {
   if (keys["d"] || keys["arrowright"]) mx += 1;
   if (mx || my) {
     const len = Math.hypot(mx, my);
+    mx /= len; my /= len;
+  } else if (joy.active && (joy.dx || joy.dy)) {
+    // Joystick gives an analog vector (magnitude 0..1) already normalised.
+    mx = joy.dx; my = joy.dy;
+  }
+  if (mx || my) {
     const c = centerPt();
-    const target = L.point(
-      c.x + (mx / len) * PLAYER_SPEED,
-      c.y + (my / len) * PLAYER_SPEED
-    );
+    const target = L.point(c.x + mx * PLAYER_SPEED, c.y + my * PLAYER_SPEED);
     player = toWorld(target);
     map.setView(player, ZOOM, { animate: false });
+  }
+
+  // Held touch-fire auto-repeats.
+  if (fireTouchId !== null) {
+    if (--autoFire <= 0) { shoot(); autoFire = 10; }
   }
 
   // Waves: spawn cadence tightens as waves climb.

@@ -33,15 +33,27 @@ python3 -m http.server 8000
 
 ## Controls
 
+**Desktop**
+
 | Action | Keys |
 | --- | --- |
 | Move  | `W A S D` or arrow keys |
 | Aim   | Mouse |
 | Shoot | Left click or `Space` |
 
+**Mobile / touch** (controls appear automatically on touch devices)
+
+| Action | Touch |
+| --- | --- |
+| Move  | Drag on the **left half** — a virtual joystick appears where you press |
+| Aim & shoot | Touch the **right half** — auto-fires toward your finger while held |
+
 Survive the waves. Enemies stream in from the edges of the neighbourhood and
 chase you; each kill is +10, contact costs health, and the spawn rate tightens
 every wave.
+
+Use the **🗺 / 🛰 button** (top-right) to flip between the OpenStreetMap street
+view and Esri satellite imagery of the Oosteroever at any time.
 
 ---
 
@@ -91,11 +103,13 @@ scales with the wave number in `spawnEnemy()`.
 
 ---
 
+## Already in the POC
+
+- ✅ **Satellite ⇄ street toggle** — live Esri World Imagery vs OpenStreetMap.
+- ✅ **Mobile controls** — auto-detected virtual joystick + touch-to-fire.
+
 ## Ideas to take it further
 
-- **Satellite tiles** for an aerial look (Esri World Imagery, or a keyed
-  provider like Mapbox/MapTiler) — swap the `L.tileLayer(...)` URL.
-- **Mobile controls**: a virtual joystick for movement (tap already shoots).
 - **Real-place objectives**: capture the lighthouse, defend the marina,
   extraction points at real POIs pulled from the OSM Overpass API.
 - **Cover & collision** derived from OSM building footprints.
