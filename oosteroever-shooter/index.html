@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Oosteroever Shooter — Oostende POC</title>
+
+<!-- Leaflet (real-world map) -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: #10131a;
+    color: #eaf0ff;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* The real-world map sits underneath everything */
+  #map {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    /* mute/darken the map so the game reads clearly on top */
+    filter: brightness(0.72) saturate(0.85) contrast(1.05);
+  }
+
+  /* Game entities are drawn here, pinned to real map coordinates */
+  #game {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  /* HUD */
+  #hud {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 20;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    background: rgba(12, 16, 26, 0.72);
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(120, 160, 255, 0.25);
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+  }
+  .stat { display: flex; flex-direction: column; line-height: 1.15; }
+  .stat .label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.6; }
+  .stat .value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #healthbar {
+    width: 130px; height: 12px; margin-top: 4px;
+    background: rgba(255,255,255,0.12); border-radius: 6px; overflow: hidden;
+  }
+  #healthfill { height: 100%; width: 100%; background: linear-gradient(90deg,#3ddc84,#7cf0b0); transition: width .12s linear; }
+
+  #locbadge {
+    position: absolute; bottom: 10px; left: 12px; z-index: 20;
+    font-size: 11px; opacity: 0.75; background: rgba(12,16,26,.6);
+    padding: 4px 9px; border-radius: 8px; pointer-events: none;
+  }
+
+  #mapToggle {
+    position: absolute; top: 12px; right: 12px; z-index: 20;
+    cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
+    color: #eaf0ff; background: rgba(12, 16, 26, 0.72);
+    border: 1px solid rgba(120, 160, 255, 0.25); border-radius: 10px;
+    padding: 9px 14px; backdrop-filter: blur(4px);
+  }
+  #mapToggle:hover { border-color: rgba(120,160,255,.55); }
+
+  /* Virtual joystick — hidden on desktop, shown on touch devices */
+  #stick {
+    position: absolute; z-index: 15; left: 26px; bottom: 42px;
+    width: 118px; height: 118px; border-radius: 50%;
+    background: rgba(124,240,176,.10);
+    border: 2px solid rgba(124,240,176,.35);
+    display: none; touch-action: none;
+  }
+  #stickNub {
+    position: absolute; left: 50%; top: 50%; width: 52px; height: 52px;
+    margin: -26px 0 0 -26px; border-radius: 50%;
+    background: rgba(124,240,176,.55); border: 2px solid #eafff2;
+  }
+  body.touch #stick { display: block; }
+  body.touch #mapToggle { bottom: auto; }
+
+  /* Overlays (start / game-over) */
+  .overlay {
+    position: absolute; inset: 0; z-index: 30;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 14px;
+    background: radial-gradient(circle at 50% 40%, rgba(20,26,42,.82), rgba(8,10,16,.94));
+    padding: 24px;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h1 { font-size: 34px; font-weight: 800; letter-spacing: .5px; }
+  .overlay h1 span { color: #7cf0b0; }
+  .overlay p { max-width: 460px; opacity: .82; font-size: 14px; line-height: 1.5; }
+  .keys { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .keys kbd {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+    border-bottom-width: 2px; border-radius: 6px; padding: 4px 9px; font-size: 12px; font-family: inherit;
+  }
+  button.play {
+    margin-top: 8px; cursor: pointer;
+    background: linear-gradient(90deg,#3ddc84,#59e0ff); color: #08101a;
+    font-weight: 800; font-size: 16px; letter-spacing: .5px;
+    border: none; border-radius: 10px; padding: 12px 30px;
+    box-shadow: 0 6px 20px rgba(60,220,132,.35);
+  }
+  button.play:hover { filter: brightness(1.06); }
+  .final { font-size: 15px; }
+  .final b { color: #7cf0b0; font-size: 22px; }
+</style>
+</head>
+<body>
+  <div id="map"></div>
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="stat">
+      <span class="label">Score</span>
+      <span class="value" id="score">0</span>
+    </div>
+    <div class="stat">
+      <span class="label">Wave</span>
+      <span class="value" id="wave">1</span>
+    </div>
+    <div class="stat">
+      <span class="label">Health</span>
+      <div id="healthbar"><div id="healthfill"></div></div>
+    </div>
+  </div>
+
+  <button id="mapToggle">🗺 Street</button>
+
+  <!-- Virtual joystick (mobile) — appears only on touch devices -->
+  <div id="stick"><div id="stickNub"></div></div>
+
+  <div id="locbadge">📍 Oosteroever, Oostende (BE) — real OpenStreetMap tiles</div>
+
+  <!-- Start screen -->
+  <div class="overlay" id="startScreen">
+    <h1>Oosteroever <span>Shooter</span></h1>
+    <p>
+      A light top-down survival shooter played on the <b>real streets of the
+      Oosteroever</b> in Oostende. Walk the harbour district, aim, and hold off
+      the waves. Proof-of-concept — the whole map is live OpenStreetMap data.
+    </p>
+    <div class="keys">
+      <kbd>W A S D</kbd><kbd>← ↑ ↓ →</kbd> move &nbsp;·&nbsp;
+      <kbd>Mouse</kbd> aim &nbsp;·&nbsp; <kbd>Click / Space</kbd> shoot
+    </div>
+    <button class="play" id="startBtn">▶ Start patrol</button>
+  </div>
+
+  <!-- Game over -->
+  <div class="overlay hidden" id="overScreen">
+    <h1>Down at the <span>Oosteroever</span></h1>
+    <p class="final">You survived to wave <b id="finalWave">1</b> with a score of <b id="finalScore">0</b>.</p>
+    <button class="play" id="retryBtn">↻ Patrol again</button>
+  </div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ *
+ *  Oosteroever Shooter — POC
+ *  A top-down survival shooter rendered over a live Leaflet/OSM map.
+ *
+ *  Design: every entity (player, enemy, bullet) lives at a real
+ *  lat/lng. Each frame we project those coordinates to screen pixels
+ *  with Leaflet, so entities stay "pinned" to the real world while the
+ *  map pans. The player sits at the map centre; moving pans the map,
+ *  giving the feel of walking through the actual neighbourhood.
+ * ------------------------------------------------------------------ */
+
+// --- The real-world location ------------------------------------------------
+// Oosteroever = the east bank of Oostende harbour (residential towers,
+// marina, the lighthouse "Lange Nelle" nearby). Tweak to move the arena.
+const START = { lat: 51.23705, lng: 2.93470 };
+const ZOOM = 17;
+
+// --- Map --------------------------------------------------------------------
+const map = L.map("map", {
+  center: [START.lat, START.lng],
+  zoom: ZOOM,
+  zoomControl: false,
+  attributionControl: true,
+  dragging: false,       // the game drives the view, not the mouse
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  boxZoom: false,
+  keyboard: false,
+  inertia: false,
+});
+// Two real-world basemaps you can toggle between in-game.
+const streetLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap contributors',
+});
+const satLayer = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  { maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics' }
+);
+let satOn = false;
+streetLayer.addTo(map);
+
+function setBasemap(sat) {
+  satOn = sat;
+  if (sat) { map.removeLayer(streetLayer); satLayer.addTo(map); }
+  else { map.removeLayer(satLayer); streetLayer.addTo(map); }
+  // Satellite is already dark; ease the CSS dimming so streets stay readable.
+  document.getElementById("map").style.filter = sat
+    ? "brightness(0.82) saturate(1.05) contrast(1.05)"
+    : "brightness(0.72) saturate(0.85) contrast(1.05)";
+  const b = document.getElementById("mapToggle");
+  b.textContent = sat ? "🛰 Satellite" : "🗺 Street";
+  document.getElementById("locbadge").textContent = sat
+    ? "📍 Oosteroever, Oostende (BE) — Esri satellite imagery"
+    : "📍 Oosteroever, Oostende (BE) — real OpenStreetMap tiles";
+}
+
+// --- Canvas -----------------------------------------------------------------
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", () => { resize(); map.invalidateSize(); });
+resize();
+
+// --- Coordinate helpers -----------------------------------------------------
+// All motion is computed in screen pixels (intuitive & pan-independent),
+// then stored back as lat/lng so entities stay glued to the map.
+function toScreen(latlng) { return map.latLngToContainerPoint(latlng); }
+function toWorld(pt)      { return map.containerPointToLatLng(pt); }
+function centerPt()       { return L.point(W / 2, H / 2); }
+
+// --- Game state -------------------------------------------------------------
+const PLAYER_SPEED = 2.6;      // px / frame (at 60fps)
+const BULLET_SPEED = 8.5;
+const BULLET_LIFE  = 70;       // frames
+const PLAYER_R = 11, ENEMY_R = 12, BULLET_R = 3.5;
+
+let player, enemies, bullets, keys, mouse;
+let score, health, wave, spawnTimer, waveTimer, running, muzzle;
+
+function reset() {
+  map.setView([START.lat, START.lng], ZOOM, { animate: false });
+  player = L.latLng(START.lat, START.lng);
+  enemies = [];
+  bullets = [];
+  keys = {};
+  mouse = { x: W / 2, y: 0 };   // aim straight up by default
+  score = 0;
+  health = 100;
+  wave = 1;
+  spawnTimer = 0;
+  waveTimer = 0;
+  muzzle = 0;
+  running = true;
+  updateHUD();
+}
+
+// --- Enemy spawning ---------------------------------------------------------
+function spawnEnemy() {
+  // Pick a point just off a random screen edge, convert to lat/lng.
+  const edge = Math.floor(Math.random() * 4);
+  const m = 40; // margin outside the viewport
+  let x, y;
+  if (edge === 0) { x = Math.random() * W; y = -m; }
+  else if (edge === 1) { x = W + m; y = Math.random() * H; }
+  else if (edge === 2) { x = Math.random() * W; y = H + m; }
+  else { x = -m; y = Math.random() * H; }
+
+  const speed = 0.9 + wave * 0.12 + Math.random() * 0.4;
+  enemies.push({ pos: toWorld(L.point(x, y)), speed, hp: 1 });
+}
+
+// --- Shooting ---------------------------------------------------------------
+function shoot() {
+  const c = centerPt();
+  let dx = mouse.x - c.x, dy = mouse.y - c.y;
+  const len = Math.hypot(dx, dy) || 1;
+  dx /= len; dy /= len;
+  bullets.push({
+    pos: toWorld(L.point(c.x + dx * PLAYER_R, c.y + dy * PLAYER_R)),
+    vx: dx * BULLET_SPEED,
+    vy: dy * BULLET_SPEED,
+    life: BULLET_LIFE,
+  });
+  muzzle = 4;
+}
+
+// --- Input ------------------------------------------------------------------
+window.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === " ") { e.preventDefault(); if (running) shoot(); }
+});
+window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
+canvas.addEventListener("mousemove", (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+canvas.addEventListener("mousedown", () => { if (running) shoot(); });
+
+// --- Touch / mobile: left-half = joystick to move, right-half = aim & fire ---
+const isTouch = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+if (isTouch) document.body.classList.add("touch");
+
+const stick = document.getElementById("stick");
+const stickNub = document.getElementById("stickNub");
+const STICK_MAX = 46;              // px the nub travels from centre
+const joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 };
+let fireTouchId = null, autoFire = 0;
+
+function isLeftHalf(x) { return x < W / 2; }
+
+function onTouchStart(e) {
+  for (const t of e.changedTouches) {
+    if (isLeftHalf(t.clientX) && !joy.active) {
+      joy.active = true; joy.id = t.identifier;
+      joy.ox = t.clientX; joy.oy = t.clientY; joy.dx = 0; joy.dy = 0;
+      stick.style.left = (t.clientX - 59) + "px";
+      stick.style.top = (t.clientY - 59) + "px";
+      stick.style.bottom = "auto";
+    } else if (fireTouchId === null) {
+      fireTouchId = t.identifier;
+      mouse.x = t.clientX; mouse.y = t.clientY;
+      if (running) { shoot(); autoFire = 10; }
+    }
+  }
+  e.preventDefault();
+}
+function onTouchMove(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joy.id) {
+      let dx = t.clientX - joy.ox, dy = t.clientY - joy.oy;
+      const d = Math.hypot(dx, dy);
+      if (d > STICK_MAX) { dx = dx / d * STICK_MAX; dy = dy / d * STICK_MAX; }
+      joy.dx = dx / STICK_MAX; joy.dy = dy / STICK_MAX;
+      stickNub.style.transform = `translate(${dx}px, ${dy}px)`;
+    } else if (t.identifier === fireTouchId) {
+      mouse.x = t.clientX; mouse.y = t.clientY;
+    }
+  }
+  e.preventDefault();
+}
+function onTouchEnd(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joy.id) {
+      joy.active = false; joy.id = null; joy.dx = 0; joy.dy = 0;
+      stickNub.style.transform = "translate(0,0)";
+    } else if (t.identifier === fireTouchId) {
+      fireTouchId = null; autoFire = 0;
+    }
+  }
+  e.preventDefault();
+}
+canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+canvas.addEventListener("touchend", onTouchEnd, { passive: false });
+canvas.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
+// Map style toggle
+document.getElementById("mapToggle").addEventListener("click", () => setBasemap(!satOn));
+
+// --- Update -----------------------------------------------------------------
+function update() {
+  if (!running) return;
+
+  // Player movement -> pan the map (player stays screen-centred).
+  let mx = 0, my = 0;
+  if (keys["w"] || keys["arrowup"])    my -= 1;
+  if (keys["s"] || keys["arrowdown"])  my += 1;
+  if (keys["a"] || keys["arrowleft"])  mx -= 1;
+  if (keys["d"] || keys["arrowright"]) mx += 1;
+  if (mx || my) {
+    const len = Math.hypot(mx, my);
+    mx /= len; my /= len;
+  } else if (joy.active && (joy.dx || joy.dy)) {
+    // Joystick gives an analog vector (magnitude 0..1) already normalised.
+    mx = joy.dx; my = joy.dy;
+  }
+  if (mx || my) {
+    const c = centerPt();
+    const target = L.point(c.x + mx * PLAYER_SPEED, c.y + my * PLAYER_SPEED);
+    player = toWorld(target);
+    map.setView(player, ZOOM, { animate: false });
+  }
+
+  // Held touch-fire auto-repeats.
+  if (fireTouchId !== null) {
+    if (--autoFire <= 0) { shoot(); autoFire = 10; }
+  }
+
+  // Waves: spawn cadence tightens as waves climb.
+  waveTimer++;
+  if (waveTimer > 60 * 22) { wave++; waveTimer = 0; }
+  spawnTimer--;
+  const cadence = Math.max(18, 70 - wave * 5);
+  if (spawnTimer <= 0) { spawnEnemy(); spawnTimer = cadence; }
+
+  const c = centerPt();
+
+  // Bullets
+  for (const b of bullets) {
+    const p = toScreen(b.pos);
+    p.x += b.vx; p.y += b.vy;
+    b.pos = toWorld(p);
+    b.life--;
+  }
+
+  // Enemies chase the player (screen-space steering).
+  for (const en of enemies) {
+    const p = toScreen(en.pos);
+    let dx = c.x - p.x, dy = c.y - p.y;
+    const d = Math.hypot(dx, dy) || 1;
+    p.x += (dx / d) * en.speed;
+    p.y += (dy / d) * en.speed;
+    en.pos = toWorld(p);
+    en.screen = p;      // cache for collision/draw
+    en.distToPlayer = d;
+  }
+
+  // Bullet vs enemy
+  for (const b of bullets) {
+    if (b.life <= 0) continue;
+    const bp = toScreen(b.pos);
+    for (const en of enemies) {
+      if (en.hp <= 0) continue;
+      if (Math.hypot(bp.x - en.screen.x, bp.y - en.screen.y) < ENEMY_R + BULLET_R) {
+        en.hp = 0;
+        b.life = 0;
+        score += 10;
+        break;
+      }
+    }
+  }
+
+  // Enemy vs player
+  for (const en of enemies) {
+    if (en.hp <= 0) continue;
+    if (en.distToPlayer < PLAYER_R + ENEMY_R) {
+      en.hp = 0;
+      health -= 12;
+      if (health <= 0) { health = 0; gameOver(); }
+    }
+  }
+
+  // Cleanup
+  bullets = bullets.filter((b) => b.life > 0);
+  enemies = enemies.filter((en) => en.hp > 0);
+
+  if (muzzle > 0) muzzle--;
+  updateHUD();
+}
+
+// --- Draw -------------------------------------------------------------------
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const c = centerPt();
+
+  // Bullets
+  ctx.fillStyle = "#ffe66d";
+  ctx.shadowColor = "#ffe66d";
+  ctx.shadowBlur = 8;
+  for (const b of bullets) {
+    const p = toScreen(b.pos);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, BULLET_R, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // Enemies
+  for (const en of enemies) {
+    const p = en.screen || toScreen(en.pos);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, ENEMY_R, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff5470";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,.65)";
+    ctx.stroke();
+    // little eye toward player
+    const a = Math.atan2(c.y - p.y, c.x - p.x);
+    ctx.beginPath();
+    ctx.arc(p.x + Math.cos(a) * 4, p.y + Math.sin(a) * 4, 2.4, 0, Math.PI * 2);
+    ctx.fillStyle = "#2a0410";
+    ctx.fill();
+  }
+
+  // Aim line
+  ctx.strokeStyle = "rgba(124,240,176,.35)";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 6]);
+  ctx.beginPath();
+  ctx.moveTo(c.x, c.y);
+  ctx.lineTo(mouse.x, mouse.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Player
+  const ang = Math.atan2(mouse.y - c.y, mouse.x - c.x);
+  // muzzle flash
+  if (muzzle > 0) {
+    ctx.beginPath();
+    ctx.arc(c.x + Math.cos(ang) * (PLAYER_R + 6), c.y + Math.sin(ang) * (PLAYER_R + 6), 5, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,230,109,.9)";
+    ctx.fill();
+  }
+  // body
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, PLAYER_R, 0, Math.PI * 2);
+  ctx.fillStyle = "#3ddc84";
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#eafff2";
+  ctx.stroke();
+  // barrel
+  ctx.beginPath();
+  ctx.moveTo(c.x, c.y);
+  ctx.lineTo(c.x + Math.cos(ang) * (PLAYER_R + 8), c.y + Math.sin(ang) * (PLAYER_R + 8));
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#0c2b1a";
+  ctx.stroke();
+}
+
+// --- HUD --------------------------------------------------------------------
+const $score = document.getElementById("score");
+const $wave = document.getElementById("wave");
+const $health = document.getElementById("healthfill");
+function updateHUD() {
+  $score.textContent = score;
+  $wave.textContent = wave;
+  $health.style.width = health + "%";
+  $health.style.background = health > 40
+    ? "linear-gradient(90deg,#3ddc84,#7cf0b0)"
+    : "linear-gradient(90deg,#ff5470,#ff9a76)";
+}
+
+// --- Loop -------------------------------------------------------------------
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// --- Screens ----------------------------------------------------------------
+const startScreen = document.getElementById("startScreen");
+const overScreen = document.getElementById("overScreen");
+function startGame() {
+  startScreen.classList.add("hidden");
+  overScreen.classList.add("hidden");
+  reset();
+}
+function gameOver() {
+  running = false;
+  document.getElementById("finalScore").textContent = score;
+  document.getElementById("finalWave").textContent = wave;
+  overScreen.classList.remove("hidden");
+}
+document.getElementById("startBtn").addEventListener("click", startGame);
+document.getElementById("retryBtn").addEventListener("click", startGame);
+
+loop();
+</script>
+</body>
+</html>
